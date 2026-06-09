@@ -9,18 +9,19 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var container: FrameLayout
     private var fullscreenView: View? = null
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
 
     companion object {
         const val SITE_URL = "https://imdfree.netlify.app/"
 
-        // Maps Android D-pad keycodes to the JS key names our useTvNav hook expects
         val DPAD_TO_JS = mapOf(
             KeyEvent.KEYCODE_DPAD_LEFT   to "ArrowLeft",
             KeyEvent.KEYCODE_DPAD_RIGHT  to "ArrowRight",
@@ -55,20 +56,24 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // Required for video frames to render
             webChromeClient = object : WebChromeClient() {
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                     fullscreenView = view
                     fullscreenCallback = callback
-                    setContentView(view)
+                    webView.visibility = View.GONE
+                    container.addView(view, FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                    ))
                     hideSystemUI()
                 }
 
                 override fun onHideCustomView() {
+                    fullscreenView?.let { container.removeView(it) }
                     fullscreenCallback?.onCustomViewHidden()
                     fullscreenView = null
                     fullscreenCallback = null
-                    setContentView(webView)
+                    webView.visibility = View.VISIBLE
                     hideSystemUI()
                 }
             }
@@ -79,7 +84,14 @@ class MainActivity : AppCompatActivity() {
             loadUrl(SITE_URL)
         }
 
-        setContentView(webView)
+        container = FrameLayout(this).apply {
+            addView(webView, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+        }
+
+        setContentView(container)
         hideSystemUI()
     }
 
@@ -88,7 +100,6 @@ class MainActivity : AppCompatActivity() {
         if (hasFocus) hideSystemUI()
     }
 
-    // Back button: exit fullscreen video first, then web history, then exit app
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (fullscreenView != null) {
@@ -103,18 +114,22 @@ class MainActivity : AppCompatActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
-    // Intercept D-pad events and inject them as JS KeyboardEvents so useTvNav
-    // receives proper ArrowKey events instead of WebView consuming them natively.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
             val jsKey = DPAD_TO_JS[event.keyCode]
             if (jsKey != null) {
+                // Dispatch on activeElement so it bubbles up through the DOM —
+                // arrow keys reach useTvNav (window listener) and Enter reaches
+                // React's onKeyDown handlers on the focused element.
                 webView.evaluateJavascript(
-                    "window.dispatchEvent(new KeyboardEvent('keydown'," +
-                    "{key:'$jsKey',bubbles:true,cancelable:true}))",
+                    "(document.activeElement||document.body).dispatchEvent(" +
+                    "new KeyboardEvent('keydown',{key:'$jsKey',bubbles:true,cancelable:true}))",
                     null
                 )
-                return true
+                // Return true to prevent WebView handling D-pad natively
+                // (otherwise WebView scrolls the page and moves its own focus cursor,
+                // fighting our JS navigation)
+                if (event.keyCode != KeyEvent.KEYCODE_BACK) return true
             }
         }
         return super.dispatchKeyEvent(event)
