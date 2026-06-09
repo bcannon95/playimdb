@@ -2,6 +2,7 @@ package com.playimdb.app
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
@@ -20,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var container: FrameLayout
     private var fullscreenView: View? = null
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
+    private var softKeyboardVisible = false
 
     companion object {
         const val SITE_URL = "https://imdfree.netlify.app/"
@@ -104,6 +106,15 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(container)
         hideSystemUI()
+
+        // Detect soft keyboard visibility so we don't intercept D-pad while
+        // the user is navigating the on-screen keyboard to type in search
+        container.viewTreeObserver.addOnGlobalLayoutListener {
+            val rect = Rect()
+            container.getWindowVisibleDisplayFrame(rect)
+            val keypadHeight = container.rootView.height - rect.bottom
+            softKeyboardVisible = keypadHeight > container.rootView.height * 0.15
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -128,7 +139,9 @@ class MainActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
             val jsKey = DPAD_TO_JS[event.keyCode]
-            if (jsKey != null) {
+            // Pass D-pad through to system when soft keyboard is open so the
+            // user can navigate and type on the on-screen keyboard
+            if (jsKey != null && !softKeyboardVisible) {
                 // Dispatch on activeElement so it bubbles up through the DOM —
                 // arrow keys reach useTvNav (window listener) and Enter reaches
                 // React's onKeyDown handlers on the focused element.

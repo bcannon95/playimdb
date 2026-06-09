@@ -68,7 +68,10 @@ export function useTvNav() {
         return
       }
 
-      if (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA') return
+      // Left/right inside a text input moves the cursor — leave those alone.
+      // Up/down should still navigate away to the next focusable element.
+      if ((focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA') &&
+          (dir === 'left' || dir === 'right')) return
 
       e.preventDefault()
 
