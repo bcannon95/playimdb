@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -13,10 +14,21 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private var fullscreenView: View? = null
+    private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
 
     companion object {
-        // Update this to your Netlify URL after deploying
         const val SITE_URL = "https://imdfree.netlify.app/"
+
+        // Maps Android D-pad keycodes to the JS key names our useTvNav hook expects
+        val DPAD_TO_JS = mapOf(
+            KeyEvent.KEYCODE_DPAD_LEFT   to "ArrowLeft",
+            KeyEvent.KEYCODE_DPAD_RIGHT  to "ArrowRight",
+            KeyEvent.KEYCODE_DPAD_UP     to "ArrowUp",
+            KeyEvent.KEYCODE_DPAD_DOWN   to "ArrowDown",
+            KeyEvent.KEYCODE_DPAD_CENTER to "Enter",
+            KeyEvent.KEYCODE_ENTER       to "Enter"
+        )
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -34,13 +46,30 @@ class MainActivity : AppCompatActivity() {
             }
 
             webViewClient = object : WebViewClient() {
-                // Keep all navigation within the WebView
                 override fun shouldOverrideUrlLoading(
                     view: WebView,
                     request: WebResourceRequest
                 ): Boolean {
                     view.loadUrl(request.url.toString())
                     return true
+                }
+            }
+
+            // Required for video frames to render
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                    fullscreenView = view
+                    fullscreenCallback = callback
+                    setContentView(view)
+                    hideSystemUI()
+                }
+
+                override fun onHideCustomView() {
+                    fullscreenCallback?.onCustomViewHidden()
+                    fullscreenView = null
+                    fullscreenCallback = null
+                    setContentView(webView)
+                    hideSystemUI()
                 }
             }
 
@@ -59,18 +88,35 @@ class MainActivity : AppCompatActivity() {
         if (hasFocus) hideSystemUI()
     }
 
-    // Firestick back button: go back in web history, or exit
+    // Back button: exit fullscreen video first, then web history, then exit app
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack()
-            return true
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (fullscreenView != null) {
+                webView.webChromeClient?.onHideCustomView()
+                return true
+            }
+            if (webView.canGoBack()) {
+                webView.goBack()
+                return true
+            }
         }
         return super.onKeyDown(keyCode, event)
     }
 
-    // Pass all key events (d-pad, etc.) through to the WebView / JavaScript
+    // Intercept D-pad events and inject them as JS KeyboardEvents so useTvNav
+    // receives proper ArrowKey events instead of WebView consuming them natively.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (webView.dispatchKeyEvent(event)) return true
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            val jsKey = DPAD_TO_JS[event.keyCode]
+            if (jsKey != null) {
+                webView.evaluateJavascript(
+                    "window.dispatchEvent(new KeyboardEvent('keydown'," +
+                    "{key:'$jsKey',bubbles:true,cancelable:true}))",
+                    null
+                )
+                return true
+            }
+        }
         return super.dispatchKeyEvent(event)
     }
 
