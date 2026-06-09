@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { getMovieDetails, IMG, playImdbUrl } from '../api/tmdb'
+import { getMovieDetails, getImdbRating, IMG, playImdbUrl } from '../api/tmdb'
 
 export default function MovieDetail({ movie, onClose }) {
   const [details, setDetails] = useState(null)
+  const [imdbRating, setImdbRating] = useState(null)
   const closeRef = useRef(null)
   const overlayRef = useRef(null)
 
   useEffect(() => {
-    getMovieDetails(movie.id).then(setDetails)
+    getMovieDetails(movie.id).then(d => {
+      setDetails(d)
+      if (d?.imdb_id) getImdbRating(d.imdb_id).then(setImdbRating)
+    })
   }, [movie.id])
 
   // Focus close button on open, restore focus on unmount
@@ -42,8 +46,9 @@ export default function MovieDetail({ movie, onClose }) {
   const backdrop = IMG.backdrop(d.backdrop_path, 'original')
   const poster    = IMG.poster(d.poster_path, 'w342')
   const year      = d.release_date?.slice(0, 4)
-  const rating    = d.vote_average > 0 ? d.vote_average.toFixed(1) : null
-  const votes     = d.vote_count ? `(${d.vote_count.toLocaleString()})` : ''
+  const rating    = imdbRating ?? (d.vote_average > 0 ? d.vote_average.toFixed(1) : null)
+  const ratingLabel = imdbRating ? 'IMDb' : 'TMDB'
+  const votes     = !imdbRating && d.vote_count ? `(${d.vote_count.toLocaleString()})` : ''
   const runtime   = d.runtime ? `${Math.floor(d.runtime / 60)}h ${d.runtime % 60}m` : null
   const genres    = d.genres?.map(g => g.name) ?? []
   const director  = details?.credits?.crew?.find(c => c.job === 'Director')
@@ -75,7 +80,11 @@ export default function MovieDetail({ movie, onClose }) {
               <h2 className="modal__title">{d.title}</h2>
               <div className="modal__meta">
                 {rating && (
-                  <span className="modal__score">&#9733; {rating} <span style={{ fontWeight: 400, fontSize: '0.8rem' }}>{votes}</span></span>
+                  <span className="modal__score">
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, marginRight: 4, opacity: 0.8 }}>{ratingLabel}</span>
+                    &#9733; {rating}
+                    {votes && <span style={{ fontWeight: 400, fontSize: '0.8rem' }}> {votes}</span>}
+                  </span>
                 )}
                 {year && <span>{year}</span>}
                 {runtime && <span>{runtime}</span>}

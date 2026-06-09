@@ -591,3 +591,72 @@ body {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+/* ── MOBILE ──────────────────────────────────── */
+
+@media (max-width: 640px) {
+  :root {
+    --card-w: 120px;
+    --card-h: 180px;
+  }
+
+  .navbar {
+    padding: 0 16px;
+    gap: 16px;
+    height: 56px;
+  }
+
+  .hero {
+    height: 62vh;
+    min-height: 300px;
+    padding-bottom: 48px;
+  }
+
+  .hero__content {
+    padding-left: 16px;
+    padding-right: 16px;
+    max-width: 100%;
+  }
+
+  .hero__title { font-size: 1.6rem; }
+
+  .hero__overview { display: none; }
+
+  .movie-row {
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+
+  .home__rows { padding-top: 16px; }
+
+  .search-page { padding: 72px 16px 48px; }
+
+  .search-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .overlay { padding: 0; align-items: flex-end; }
+
+  .modal {
+    border-radius: 12px 12px 0 0;
+    max-height: 92vh;
+  }
+
+  .modal__backdrop-wrap { height: 200px; }
+
+  .modal__body { padding: 0 16px 24px; }
+
+  .modal__header { gap: 14px; }
+
+  .modal__poster { width: 80px; margin-top: -30px; }
+
+  .modal__title { font-size: 1.3rem; }
+
+  .modal__crew { flex-wrap: wrap; gap: 14px; }
+
+  .modal__cast {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+  }
+}

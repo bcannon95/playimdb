@@ -36,3 +36,12 @@ export const FEATURED_GENRES = [
 
 export const playImdbUrl = (imdbId) =>
   imdbId ? `https://www.playimdb.com/title/${imdbId}/` : null
+
+const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY
+export const getImdbRating = async (imdbId) => {
+  if (!OMDB_KEY || !imdbId) return null
+  const res = await fetch(`https://www.omdbapi.com/?i=${imdbId}&apikey=${OMDB_KEY}`)
+  if (!res.ok) return null
+  const d = await res.json()
+  return d.imdbRating && d.imdbRating !== 'N/A' ? d.imdbRating : null
+}
