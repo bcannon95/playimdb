@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Firestick app grid banner — 320x180dp -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+
+    <!-- Background -->
+    <path
+        android:fillColor="#0D0D0D"
+        android:pathData="M0,0 L320,0 L320,180 L0,180 Z" />
+
+    <!-- Yellow accent bar -->
+    <path
+        android:fillColor="#F5C518"
+        android:pathData="M0,0 L8,0 L8,180 L0,180 Z" />
+
+    <!-- "Play" text -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,72 L32,108 L38,108 L38,94 L52,94 L52,88 L38,88 L38,78 L54,78 L54,72 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M58,72 L58,108 L64,108 L64,72 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M68,86 L68,108 L74,108 L74,96 L83,108 L91,108 L80,94 L90,86 L82,86 L74,93 L74,86 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M93,86 L93,108 L99,108 L99,99 L107,99 C112,99 115,96 115,92 C115,88 112,86 107,86 Z M99,93 L99,92 L107,92 C109,92 109,93 109,93 C109,94 109,95 107,95 L99,95 Z" />
+
+    <!-- "IMDB" in yellow -->
+    <path
+        android:fillColor="#F5C518"
+        android:pathData="M128,86 L128,108 L134,108 L134,86 Z" />
+    <path
+        android:fillColor="#F5C518"
+        android:pathData="M138,86 L138,108 L148,108 C156,108 161,103 161,97 C161,91 156,86 148,86 Z M144,92 L148,92 C152,92 155,94 155,97 C155,100 152,102 148,102 L144,102 Z" />
+    <path
+        android:fillColor="#F5C518"
+        android:pathData="M165,86 L165,108 L171,108 L171,96 L178,108 L183,108 L190,96 L190,108 L196,108 L196,86 L189,86 L180,101 L171,86 Z" />
+    <path
+        android:fillColor="#F5C518"
+        android:pathData="M200,86 L200,108 L212,108 C218,108 222,105 222,101 C222,98 220,97 218,96 C220,95 221,93 221,91 C221,88 218,86 212,86 Z M206,92 L212,92 C214,92 215,93 215,94 C215,95 214,96 212,96 L206,96 Z M206,101 L206,102 L212,102 C214,102 216,101 216,100 C216,99 214,98 212,98 L206,98 Z" />
+
+</vector>
