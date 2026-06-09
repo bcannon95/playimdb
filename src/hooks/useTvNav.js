@@ -3,7 +3,9 @@ import { useEffect } from 'react'
 const FOCUSABLE = '[tabindex="0"], button:not([disabled]), a[href], input:not([disabled])'
 
 function getVisible() {
-  return Array.from(document.querySelectorAll(FOCUSABLE)).filter(el => {
+  // When a modal is open, restrict navigation to elements inside it
+  const scope = document.querySelector('.overlay') ?? document
+  return Array.from(scope.querySelectorAll(FOCUSABLE)).filter(el => {
     const r = el.getBoundingClientRect()
     return r.width > 0 && r.height > 0
   })
