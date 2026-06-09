@@ -1,7 +1,9 @@
 package com.playimdb.app
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
@@ -49,10 +51,6 @@ class MainActivity : AppCompatActivity() {
                 useWideViewPort = true
                 cacheMode = WebSettings.LOAD_DEFAULT
                 mediaPlaybackRequiresUserGesture = false
-                // Spoof Chrome on Android TV so streaming sites don't block WebView
-                userAgentString = "Mozilla/5.0 (Linux; Android 9; AFTMM Build/PS7233) " +
-                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                    "Chrome/120.0.0.0 Mobile Safari/537.36"
             }
 
             webViewClient = object : WebViewClient() {
@@ -60,9 +58,17 @@ class MainActivity : AppCompatActivity() {
                     view: WebView,
                     request: WebResourceRequest
                 ): Boolean {
-                    // Load all URLs inside the WebView — media sites included
-                    view.loadUrl(request.url.toString())
-                    return true
+                    val url = request.url.toString()
+                    // Keep our app URL inside the WebView; open everything else
+                    // (media sites, external links) in Silk browser or native app
+                    return if (url.startsWith(SITE_URL)) {
+                        false
+                    } else {
+                        try {
+                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                        } catch (_: Exception) { }
+                        true
+                    }
                 }
             }
 
