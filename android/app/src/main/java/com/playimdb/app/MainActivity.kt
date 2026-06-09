@@ -26,14 +26,17 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val SITE_URL = "https://imdfree.netlify.app/"
 
-        val DPAD_TO_JS = mapOf(
-            KeyEvent.KEYCODE_DPAD_LEFT   to "ArrowLeft",
-            KeyEvent.KEYCODE_DPAD_RIGHT  to "ArrowRight",
-            KeyEvent.KEYCODE_DPAD_UP     to "ArrowUp",
-            KeyEvent.KEYCODE_DPAD_DOWN   to "ArrowDown",
-            KeyEvent.KEYCODE_DPAD_CENTER to "Enter",
-            KeyEvent.KEYCODE_ENTER       to "Enter"
+        // Arrow keys — injected as KeyboardEvents so useTvNav can move focus
+        val DPAD_ARROWS = mapOf(
+            KeyEvent.KEYCODE_DPAD_LEFT  to "ArrowLeft",
+            KeyEvent.KEYCODE_DPAD_RIGHT to "ArrowRight",
+            KeyEvent.KEYCODE_DPAD_UP    to "ArrowUp",
+            KeyEvent.KEYCODE_DPAD_DOWN  to "ArrowDown",
         )
+
+        // Select/Enter — fire .click() so React onClick handlers and links activate.
+        // A synthetic KeyboardEvent for Enter does NOT trigger onClick on buttons/anchors.
+        val ENTER_KEYS = setOf(KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -137,23 +140,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN) {
-            val jsKey = DPAD_TO_JS[event.keyCode]
-            // Pass D-pad through to system when soft keyboard is open so the
-            // user can navigate and type on the on-screen keyboard
-            if (jsKey != null && !softKeyboardVisible) {
-                // Dispatch on activeElement so it bubbles up through the DOM —
-                // arrow keys reach useTvNav (window listener) and Enter reaches
-                // React's onKeyDown handlers on the focused element.
+        if (event.action == KeyEvent.ACTION_DOWN && !softKeyboardVisible) {
+            // Enter/Select: fire .click() on the focused element.
+            // A synthetic KeyboardEvent('keydown', {key:'Enter'}) does NOT trigger
+            // onClick on buttons or anchor tags — only a real click does.
+            if (event.keyCode in ENTER_KEYS) {
+                webView.evaluateJavascript(
+                    "(document.activeElement||document.body).click()",
+                    null
+                )
+                return true
+            }
+
+            // Arrow keys: inject KeyboardEvent so useTvNav moves focus.
+            // Return true to stop WebView consuming them natively (scroll/internal focus).
+            val jsKey = DPAD_ARROWS[event.keyCode]
+            if (jsKey != null) {
                 webView.evaluateJavascript(
                     "(document.activeElement||document.body).dispatchEvent(" +
                     "new KeyboardEvent('keydown',{key:'$jsKey',bubbles:true,cancelable:true}))",
                     null
                 )
-                // Return true to prevent WebView handling D-pad natively
-                // (otherwise WebView scrolls the page and moves its own focus cursor,
-                // fighting our JS navigation)
-                if (event.keyCode != KeyEvent.KEYCODE_BACK) return true
+                return true
             }
         }
         return super.dispatchKeyEvent(event)
