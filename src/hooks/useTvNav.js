@@ -17,10 +17,9 @@ function findBest(dir, all, focused) {
   const fcx = cx(curr), fcy = cy(curr)
 
   // Try progressively wider cones until something is found.
-  // 1.5 = ~56° (strict), 3.0 = ~72°, 10.0 = ~84° (nearly a half-plane).
-  // This handles layouts where the next element isn't directly in line —
-  // e.g. navigating down from a centred hero button to a left-aligned card row.
-  for (const ratio of [1.5, 3.0, 10.0]) {
+  // 1.5 = ~56° (strict), 3.5 = ~74° (relaxed for offset layouts).
+  // Keeping the max tight prevents wild cross-screen jumps.
+  for (const ratio of [1.5, 3.5]) {
     let best = null
     let bestScore = Infinity
 
@@ -59,10 +58,11 @@ export function useTvNav() {
 
       const focused = document.activeElement
 
-      // Nothing focused — pick the first visible focusable element
+      // Nothing focused — skip nav, focus first content element
       if (!focused || focused === document.body) {
         const all = getVisible()
-        if (all.length) all[0].focus()
+        const content = all.find(el => !el.closest('.navbar')) ?? all[0]
+        if (content) content.focus()
         return
       }
 
