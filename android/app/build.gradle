@@ -16,10 +16,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Points to your local Vite dev server — update IP to match your machine
+            // Run: npm run dev -- --host   to expose on your network
+            buildConfigField "String", "SITE_URL", '"http://192.168.1.100:5173/"'
+        }
         release {
+            buildConfigField "String", "SITE_URL", '"https://imdfree.netlify.app/"'
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     compileOptions {

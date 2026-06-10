@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
     private var softKeyboardVisible = false
 
     companion object {
-        const val SITE_URL = "https://imdfree.netlify.app/"
+        val SITE_URL get() = BuildConfig.SITE_URL
 
         // Arrow keys — injected as KeyboardEvents so useTvNav can move focus
         val DPAD_ARROWS = mapOf(
